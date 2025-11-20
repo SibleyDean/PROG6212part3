@@ -1,0 +1,23 @@
+﻿@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<div class="text-center py-5">
+    <div class="card mx-auto" style="max-width: 500px;">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0"><i class="fas fa-ban me-2"></i>Access Denied</h3>
+        </div>
+        <div class="card-body py-5">
+            <i class="fas fa-lock fa-5x text-danger mb-4"></i>
+            <h4 class="text-danger mb-3">Unauthorized Access</h4>
+            <p class="lead mb-4">You don't have permission to access this page with your current role.</p>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Your role: <strong class="text-uppercase">@Context.Session.GetString("UserRole")</strong>
+            </div>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-primary btn-lg mt-3">
+                <i class="fas fa-home me-2"></i>Return to Dashboard
+            </a>
+        </div>
+    </div>
+</div>

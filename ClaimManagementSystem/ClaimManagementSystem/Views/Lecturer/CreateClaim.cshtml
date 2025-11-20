@@ -1,0 +1,146 @@
+﻿@model Claim
+@{
+    ViewData["Title"] = "Submit New Claim";
+    var hourlyRate = ViewBag.HourlyRate;
+}
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0"><i class="fas fa-plus me-2"></i>Submit New Claim</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="CreateClaim" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label">Claim Title *</label>
+                <input asp-for="Title" class="form-control" placeholder="Enter a descriptive title for this claim" required>
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label">Description *</label>
+                <textarea asp-for="Description" class="form-control" rows="3"
+                          placeholder="Provide a detailed description of the work performed..."
+                          maxlength="1000" required></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+                <div class="form-text"><span id="charCount">0</span>/1000 characters</div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label asp-for="HoursWorked" class="form-label">Hours Worked *</label>
+                        <input asp-for="HoursWorked" class="form-control" id="hoursWorked"
+                               type="number" step="0.01" min="0.01" max="180" required>
+                        <span asp-validation-for="HoursWorked" class="text-danger"></span>
+                        <div class="form-text">Maximum 180 hours per month</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Hourly Rate</label>
+                        <input type="text" class="form-control" value="R @hourlyRate" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Calculated Amount</label>
+                        <input type="text" class="form-control" id="calculatedAmount" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="documentationFile" class="form-label">Supporting Documentation *</label>
+                <input type="file" class="form-control" id="documentationFile" name="documentationFile"
+                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+                <span class="text-danger" id="documentationFileError"></span>
+                <div class="form-text">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Upload supporting documents (PDF, Word, JPG, PNG). Maximum file size: 5MB.
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted" id="fileNamePreview"></small>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="@Url.Action("Index")" class="btn btn-secondary me-md-2">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-1"></i>Submit Claim
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Hours worked calculation
+            $('#hoursWorked').on('input', function() {
+                var hours = parseFloat($(this).val()) || 0;
+                var hourlyRate = @hourlyRate;
+                var amount = hours * hourlyRate;
+                $('#calculatedAmount').val('R ' + amount.toFixed(2));
+            });
+
+            // Character count for description
+            $('#Description').on('input', function() {
+                var length = $(this).val().length;
+                $('#charCount').text(length);
+                if (length > 1000) {
+                    $('#charCount').addClass('text-danger');
+                } else {
+                    $('#charCount').removeClass('text-danger');
+                }
+            });
+
+            // File name preview
+            $('#documentationFile').on('change', function() {
+                var fileName = $(this).val().split('\\').pop();
+                if (fileName) {
+                    $('#fileNamePreview').html('<i class="fas fa-file me-1"></i>' + fileName);
+                } else {
+                    $('#fileNamePreview').html('');
+                }
+            });
+
+            // File validation
+            $('form').on('submit', function(e) {
+                var fileInput = $('#documentationFile')[0];
+                if (fileInput.files.length > 0) {
+                    var file = fileInput.files[0];
+                    var validTypes = ['application/pdf',
+                                    'application/msword',
+                                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                    'image/jpeg',
+                                    'image/jpg',
+                                    'image/png'];
+
+                    if (!validTypes.includes(file.type)) {
+                        $('#documentationFileError').text('Invalid file type. Please upload PDF, Word, or image files.');
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    if (file.size > 5 * 1024 * 1024) {
+                        $('#documentationFileError').text('File size exceeds 5MB limit.');
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            // Trigger initial calculations
+            $('#hoursWorked').trigger('input');
+            $('#Description').trigger('input');
+        });
+    </script>
+}

@@ -1,0 +1,165 @@
+﻿@model List<Claim>
+@{
+    ViewData["Title"] = "My Claims";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-list me-2"></i>My Claims</h2>
+    <a href="@Url.Action("CreateClaim")" class="btn btn-success">
+        <i class="fas fa-plus me-2"></i>Submit New Claim
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Title</th>
+                            <th>Submission Date</th>
+                            <th>Hours Worked</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var claim in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@claim.Title</strong>
+                                    @if (!string.IsNullOrEmpty(claim.Documentation) && claim.Documentation.Length > 50)
+                                    {
+                                        <br>
+                                        <small class="text-muted">@claim.Documentation.Substring(0, 50)...</small>
+                                    }
+                                    else if (!string.IsNullOrEmpty(claim.Documentation))
+                                    {
+                                        <br>
+                                        <small class="text-muted">@claim.Documentation</small>
+                                    }
+                                </td>
+                                <td>@claim.SubmissionDate.ToString("dd/MM/yyyy")</td>
+                                <td>@claim.HoursWorked</td>
+                                <td>R @claim.Amount.ToString("F2")</td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(claim.Status)">@claim.Status</span>
+                                    @if (!string.IsNullOrEmpty(claim.RejectionReason))
+                                    {
+                                        <br>
+                                        <small class="text-muted" title="@claim.RejectionReason">
+                                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                                            Rejected
+                                        </small>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <!-- View Button -->
+                                        <a href="@Url.Action("ViewClaim", new { id = claim.ClaimId })"
+                                           class="btn btn-outline-primary"
+                                           title="View Claim">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+
+                                        <!-- Edit Button (only for submitted claims) -->
+                                        @if (claim.Status == "Submitted")
+                                        {
+                                            <a href="@Url.Action("EditClaim", new { id = claim.ClaimId })"
+                                               class="btn btn-outline-warning"
+                                               title="Edit Claim">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-outline-secondary" disabled title="Edit disabled - claim is processed">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        }
+
+                                        <!-- Delete Button (only for submitted claims) -->
+                                        @if (claim.Status == "Submitted")
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-outline-danger"
+                                                    title="Delete Claim"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteModal@(claim.ClaimId)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-outline-secondary" disabled title="Delete disabled - claim is processed">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+
+                                    <!-- Delete Confirmation Modal -->
+                                    @if (claim.Status == "Submitted")
+                                    {
+                                        <div class="modal fade" id="deleteModal@(claim.ClaimId)" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Confirm Delete</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Are you sure you want to delete the claim "<strong>@claim.Title</strong>"?</p>
+                                                        <p class="text-danger"><small>This action cannot be undone.</small></p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <form method="post" asp-action="DeleteClaim" class="d-inline">
+                                                            <input type="hidden" name="id" value="@claim.ClaimId" />
+                                                            <button type="submit" class="btn btn-danger">
+                                                                <i class="fas fa-trash me-1"></i>Delete
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <h5>No claims submitted yet</h5>
+                <p class="text-muted">Submit your first claim to get started</p>
+                <a href="@Url.Action("CreateClaim")" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Submit Claim
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    public string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Submitted" => "bg-warning",
+            "ApprovedByProgrammeCoordinator" => "bg-info",
+            "ApprovedByAcademicManager" => "bg-success",
+            "Paid" => "bg-success",
+            "Rejected" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}
